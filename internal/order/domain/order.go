@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type Status string
 
 const (
@@ -52,6 +54,18 @@ func (o *Order) Total() int64 {
 		sum -= o.coupon.DiscountFor(sum)
 	}
 	return sum
+}
+
+// ApplyCoupon は注文にクーポンを適用する。有効期限を過ぎたクーポンは適用できない。
+func (o *Order) ApplyCoupon(c *Coupon, now time.Time) error {
+	if o.Status == StatusPlaced {
+		return ErrAlreadyPlaced
+	}
+	if now.After(c.ValidThrough) {
+		return ErrCouponExpired
+	}
+	o.coupon = c
+	return nil
 }
 
 func (o *Order) Place() error {
